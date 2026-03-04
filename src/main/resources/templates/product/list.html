@@ -1,10 +1,79 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
+  <meta charset="utf-8"/>
+  <title>Product List</title>
 </head>
 <body>
-$END$
+
+<h1>제품 목록</h1>
+
+<!-- 검색 -->
+<form th:action="@{/product/list}" method="get">
+  <input type="text" name="keyword" placeholder="상품명 검색"
+         th:value="${keyword}">
+  <button type="submit">검색</button>
+  <a th:href="@{/product/list}">초기화</a>
+</form>
+
+<hr/>
+
+<table border="1" cellpadding="6">
+  <thead>
+  <tr>
+    <th>ID</th>
+    <th>상품명</th>
+    <th>가격</th>
+    <th>작성자</th>
+    <th>등록일</th>
+    <th>관리</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr th:each="p : ${products}">
+    <td th:text="${p.id()}">1</td>
+    <td th:text="${p.name()}">상품</td>
+    <td th:text="${p.price()}">10000</td>
+    <td th:text="${p.ownerUsername()}">user1</td>
+    <td th:text="${p.createdAt()}">2026-03-04</td>
+
+    <td>
+      <!-- ADMIN이면 무조건 삭제 가능 -->
+      <div sec:authorize="hasRole('ADMIN')">
+        <form th:action="@{|/product/delete/${p.id()}|}" method="post" style="display:inline;">
+          <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+          <button type="submit">삭제</button>
+        </form>
+      </div>
+
+      <!-- ADMIN이 아니면: 본인(owner)만 삭제 버튼 보이기 -->
+      <div sec:authorize="!hasRole('ADMIN')"
+           th:if="${p.ownerUsername() == #authentication.name}">
+        <form th:action="@{|/product/delete/${p.id()}|}" method="post" style="display:inline;">
+          <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+          <button type="submit">삭제</button>
+        </form>
+      </div>
+    </td>
+  </tr>
+
+  <tr th:if="${#lists.isEmpty(products)}">
+    <td colspan="6">등록된 상품이 없습니다.</td>
+  </tr>
+  </tbody>
+</table>
+
+<hr/>
+
+<!-- 등록 페이지 링크는 권한 가진 사람에게만 노출 -->
+<div sec:authorize="isAuthenticated()">
+  <a th:href="@{/product/add}">제품 등록</a>
+</div>
+
+<br/>
+<a th:href="@{/}">메인으로</a>
+
 </body>
 </html>
